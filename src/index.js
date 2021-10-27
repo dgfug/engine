@@ -81,7 +81,7 @@ export { BatchGroup } from './scene/batching/batch-group.js';
 export { SkinBatchInstance } from './scene/batching/skin-batch-instance.js';
 export { BatchManager } from './scene/batching/batch-manager.js';
 export { Camera } from './scene/camera.js';
-export { WorldClusters } from './scene/world-clusters.js';
+export { WorldClusters } from './scene/lighting/world-clusters.js';
 export { DepthMaterial } from './scene/materials/depth-material.js';
 export { ForwardRenderer } from './scene/renderer/forward-renderer.js';
 export { GraphNode } from './scene/graph-node.js';
@@ -178,7 +178,6 @@ export { TextureAtlasHandler } from './resources/texture-atlas.js';
 // ASSETS
 export * from './asset/constants.js';
 export { Asset } from './asset/asset.js';
-export { AssetListLoader } from './asset/asset-list-loader.js';
 export { AssetReference } from './asset/asset-reference.js';
 export { AssetRegistry } from './asset/asset-registry.js';
 export { LocalizedAsset } from './asset/asset-localized.js';
@@ -304,4 +303,4 @@ export { XrPlaneDetection } from './xr/xr-plane-detection.js';
 export { XrPlane } from './xr/xr-plane.js';
 
 // BACKWARDS COMPATIBILITY
-export * from './deprecated.js';
+export * from './deprecated/deprecated.js';

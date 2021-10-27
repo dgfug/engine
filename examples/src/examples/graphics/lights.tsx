@@ -32,7 +32,6 @@ class LightsExample extends Example {
         </>;
     }
 
-    // @ts-ignore: override class function
     controls(data: Observer) {
         return <>
             <Panel headerText='OMNI LIGHT [KEY_1]'>
@@ -179,6 +178,7 @@ class LightsExample extends Example {
                 assets.xmas_posz.id, assets.xmas_negz.id
             ]
         });
+        // @ts-ignore engine-tsd
         cubemapAsset.loadFaces = true;
         app.assets.add(cubemapAsset);
 

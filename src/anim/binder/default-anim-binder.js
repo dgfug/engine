@@ -52,7 +52,7 @@ class DefaultAnimBinder {
             return meshInstances;
         };
 
-        this.nodeCounts = {};                 // map of node path -> count
+        this.nodeCounts = {};               // map of node path -> count
         this.activeNodes = [];              // list of active nodes
         this.handlers = {
             'localPosition': function (node) {
@@ -102,7 +102,7 @@ class DefaultAnimBinder {
 
                 return null;
             },
-            'materialTexture': function (node, textureName) {
+            'materialTexture': (node, textureName) => {
                 const meshInstances = findMeshInstances(node);
                 if (meshInstances) {
                     let meshInstance;
@@ -113,19 +113,19 @@ class DefaultAnimBinder {
                         }
                     }
                     if (meshInstance) {
-                        const func = function (value) {
+                        const func = (value) => {
                             const textureAsset = this.animComponent.system.app.assets.get(value[0]);
                             if (textureAsset && textureAsset.resource && textureAsset.type === 'texture') {
                                 meshInstance.material[textureName] = textureAsset.resource;
                                 meshInstance.material.update();
                             }
-                        }.bind(this);
+                        };
                         return DefaultAnimBinder.createAnimTarget(func, 'vector', 1, node, 'materialTexture', 'material');
                     }
                 }
 
                 return null;
-            }.bind(this)
+            }
         };
     }
 
@@ -156,7 +156,6 @@ class DefaultAnimBinder {
             return null;
         }
 
-
         let node;
         if (this.graph) {
             node = this.graph.findByPath(path.entityPath);
@@ -167,7 +166,7 @@ class DefaultAnimBinder {
             // #if _DEBUG
             const fallbackGraphPath = AnimBinder.encode(path.entityPath[path.entityPath.length - 1] || "", 'graph', path.propertyPath);
             if (this.visitedFallbackGraphPaths[fallbackGraphPath] === 1) {
-                console.warn('Anim Binder: Multiple animation curves with the path ' + fallbackGraphPath + ' are present in the ' + this.graph.path + ' graph which may result in the incorrect binding of animations');
+                console.warn(`Anim Binder: Multiple animation curves with the path ${fallbackGraphPath} are present in the ${this.graph.path} graph which may result in the incorrect binding of animations`);
             }
             if (!Number.isFinite(this.visitedFallbackGraphPaths[fallbackGraphPath])) {
                 this.visitedFallbackGraphPaths[fallbackGraphPath] = 0;
@@ -243,7 +242,11 @@ class DefaultAnimBinder {
     }
 
     assignMask(mask) {
-        this._mask = mask;
+        if (mask !== this._mask) {
+            this._mask = mask;
+            return true;
+        }
+        return false;
     }
 }
 

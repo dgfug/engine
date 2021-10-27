@@ -44,7 +44,7 @@ class AnimComponentLayer {
     /**
      * @function
      * @name AnimComponentLayer#reset
-     * @description Reset the animation component to it's initial state, including all parameters. The system will be paused.
+     * @description Reset the animation component to its initial state, including all parameters. The system will be paused.
      */
     reset() {
         this._controller.reset();
@@ -63,8 +63,25 @@ class AnimComponentLayer {
         this._controller.update(dt);
     }
 
+    /**
+     * @function
+     * @name AnimComponentLayer#assignMask
+     * @description Add a mask to this layer.
+     * @param {object} [mask] - The mask to assign to the layer. If not provided the current mask in the layer will be removed.
+     * @example
+     * entity.anim.baseLayer.assignMask({
+     *     // include the spine of the current model and all of its children
+     *     "path/to/spine": {
+     *         children: true
+     *     },
+     *     // include the hip of the current model but not all of its children
+     *     "path/to/hip": true
+     * });
+     */
     assignMask(mask) {
-        this._controller.assignMask(mask);
+        if (this._controller.assignMask(mask)) {
+            this._component.rebind();
+        }
     }
 
     /**
@@ -84,6 +101,12 @@ class AnimComponentLayer {
             return;
         }
         this._controller.assignAnimation(nodeName, animTrack, speed, loop);
+        if (this._controller._transitions.length === 0) {
+            this._controller._transitions.push(new AnimTransition({
+                from: 'START',
+                to: nodeName
+            }));
+        }
         if (this._component.activate && this._component.playable) {
             this._component.playing = true;
         }
@@ -107,7 +130,7 @@ class AnimComponentLayer {
      * @description Transition to any state in the current layers graph. Transitions can be instant or take an optional blend time.
      * @param {string} to - The state that this transition will transition to.
      * @param {number} [time] - The duration of the transition in seconds. Defaults to 0.
-     * @param {number} [transitionOffset] - If provided, the destination state will begin playing its animation at this time. Given in normalised time, based on the states duration & must be between 0 and 1. Defaults to null.
+     * @param {number} [transitionOffset] - If provided, the destination state will begin playing its animation at this time. Given in normalized time, based on the states duration & must be between 0 and 1. Defaults to null.
      */
     transition(to, time = 0, transitionOffset = null) {
         this._controller.updateStateFromTransition(new AnimTransition({
@@ -175,7 +198,7 @@ class AnimComponentLayer {
      * @readonly
      * @name AnimComponentLayer#activeStateProgress
      * @type {number}
-     * @description Returns the currently active states progress as a value normalised by the states animation duration. Looped animations will return values greater than 1.
+     * @description Returns the currently active states progress as a value normalized by the states animation duration. Looped animations will return values greater than 1.
      */
     get activeStateProgress() {
         return this._controller.activeStateProgress;
@@ -253,6 +276,13 @@ class AnimComponentLayer {
 
     get blendType() {
         return this._blendType;
+    }
+
+    set blendType(value) {
+        if (value !== this._blendType) {
+            this._blendType = value;
+            this._component.rebind();
+        }
     }
 }
 

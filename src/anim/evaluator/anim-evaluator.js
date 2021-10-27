@@ -1,4 +1,4 @@
-import { AnimTargetValue } from './anim-target-value';
+import { AnimTargetValue } from './anim-target-value.js';
 
 /**
  * @private
@@ -40,18 +40,17 @@ class AnimEvaluator {
 
     static _set(a, b, type) {
         const len  = a.length;
-        let i;
 
         if (type === 'quaternion') {
             let l = AnimEvaluator._dot(b, b);
             if (l > 0) {
                 l = 1.0 / Math.sqrt(l);
             }
-            for (i = 0; i < len; ++i) {
+            for (let i = 0; i < len; ++i) {
                 a[i] = b[i] * l;
             }
         } else {
-            for (i = 0; i < len; ++i) {
+            for (let i = 0; i < len; ++i) {
                 a[i] = b[i];
             }
         }
@@ -168,8 +167,8 @@ class AnimEvaluator {
                 }
 
                 // binding may have failed
-                // TODO: it may be worth storing quaternions and vector targets in seperate
-                // lists. this way the update code won't be foreced to check target type before
+                // TODO: it may be worth storing quaternions and vector targets in separate
+                // lists. this way the update code won't be forced to check target type before
                 // setting/blending each target.
                 if (target) {
                     target.curves++;
@@ -267,7 +266,7 @@ class AnimEvaluator {
     }
 
     assignMask(mask) {
-        this._binder.assignMask(mask);
+        return this._binder.assignMask(mask);
     }
 
     /**
@@ -290,9 +289,7 @@ class AnimEvaluator {
             return clips[a].blendOrder < clips[b].blendOrder;
         });
 
-        let i, j;
-
-        for (i = 0; i < order.length; ++i) {
+        for (let i = 0; i < order.length; ++i) {
             const index = order[i];
             const clip = clips[index];
             const inputs = this._inputs[index];
@@ -309,7 +306,7 @@ class AnimEvaluator {
             let value;
 
             if (blendWeight >= 1.0) {
-                for (j = 0; j < inputs.length; ++j) {
+                for (let j = 0; j < inputs.length; ++j) {
                     input = inputs[j];
                     output = outputs[j];
                     value = output.value;
@@ -319,7 +316,7 @@ class AnimEvaluator {
                     output.blendCounter++;
                 }
             } else if (blendWeight > 0.0) {
-                for (j = 0; j < inputs.length; ++j) {
+                for (let j = 0; j < inputs.length; ++j) {
                     input = inputs[j];
                     output = outputs[j];
                     value = output.value;
@@ -348,11 +345,11 @@ class AnimEvaluator {
                     if (animTarget.counter === animTarget.layerCounter) {
                         animTarget.counter = 0;
                     }
-                    // if this anim layer is in the mask, add this layers value onto the target value
-                    if (animTarget.mask[binder.layerIndex]) {
-                        animTarget.updateValue(binder.layerIndex, target.value);
-                    }
-                    // get the updated value from the target which has been weighted and normalised using the layer mask and weights
+
+                    // Add this layers value onto the target value
+                    animTarget.updateValue(binder.layerIndex, target.value);
+
+                    // get the updated value from the target which has been weighted and normalized using the layer mask and weights
                     targetValue[0] = animTarget.value.x;
                     targetValue[1] = animTarget.value.y;
                     targetValue[2] = animTarget.value.z;

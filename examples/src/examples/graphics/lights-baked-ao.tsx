@@ -29,7 +29,6 @@ class LightsBakedAOExample extends Example {
         </>;
     }
 
-    // @ts-ignore: override class function
     controls(data: Observer) {
         return <>
             <Panel headerText='Lightmap Filter Settings'>
@@ -90,7 +89,6 @@ class LightsBakedAOExample extends Example {
         </>;
     }
 
-    // @ts-ignore: override class function
     example(canvas: HTMLCanvasElement, assets: any, data: any): void {
 
         // Create the app and start the update loop
@@ -231,14 +229,19 @@ class LightsBakedAOExample extends Example {
                     app.scene.ambientBakeSpherePart = value ? 0.4 : 1;
                 } else {
                     // all other values are set directly on the scene
+                    // @ts-ignore engine-tsd
                     app.scene[pathArray[2]] = value;
                 }
             } else if (pathArray[1] === 'directional') {
+                // @ts-ignore engine-tsd
                 lightDirectional.light[pathArray[2]] = value;
             } else if (pathArray[1] === 'settings') {
+                // @ts-ignore engine-tsd
                 app.scene[pathArray[2]] = value;
             } else if (pathArray[1] === 'other') {
+                // @ts-ignore engine-tsd
                 lightOmni.light[pathArray[2]] = value;
+                // @ts-ignore engine-tsd
                 lightSpot.light[pathArray[2]] = value;
             } else {
                 // don't rebake if stats change
@@ -271,7 +274,7 @@ class LightsBakedAOExample extends Example {
                 bakeArea: 10
             },
             other: {
-                enabled: true,
+                enabled: true
             },
             stats: {
                 duration: ''
@@ -287,6 +290,7 @@ class LightsBakedAOExample extends Example {
                 app.lightmapper.bake(null, bakeType);
 
                 // update stats with the bake duration
+                // @ts-ignore engine-tsd
                 data.set('data.stats.duration', app.lightmapper.stats.totalRenderTime.toFixed(1) + 'ms');
             }
         });

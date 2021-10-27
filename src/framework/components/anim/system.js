@@ -28,7 +28,7 @@ class AnimComponentSystem extends ComponentSystem {
         this.schema = _schema;
 
         this.on('beforeremove', this.onBeforeRemove, this);
-        ComponentSystem.bind('animationUpdate', this.onAnimationUpdate, this);
+        this.app.systems.on('animationUpdate', this.onAnimationUpdate, this);
     }
 
     initializeComponentData(component, data, properties) {
@@ -36,7 +36,7 @@ class AnimComponentSystem extends ComponentSystem {
         super.initializeComponentData(component, data, _schema);
         const complexProperties = ['animationAssets', 'stateGraph', 'layers', 'masks'];
         Object.keys(data).forEach((key) => {
-            // these properties will be initialised manually below
+            // these properties will be initialized manually below
             if (complexProperties.includes(key)) return;
             component[key] = data[key];
         });
@@ -98,6 +98,12 @@ class AnimComponentSystem extends ComponentSystem {
 
     onBeforeRemove(entity, component) {
         component.onBeforeRemove();
+    }
+
+    destroy() {
+        super.destroy();
+
+        this.app.systems.off('animationUpdate', this.onAnimationUpdate, this);
     }
 }
 

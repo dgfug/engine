@@ -11,16 +11,6 @@ const _tempArray = [];
 const _viewport = new Vec4();
 const _scissor = new Vec4();
 
-// offsets to individual faces of a cubemap inside 3x3 grid in an atlas slot
-const _cubeSlotsOffsets = [
-    new Vec2(0, 0),
-    new Vec2(0, 1),
-    new Vec2(1, 0),
-    new Vec2(1, 1),
-    new Vec2(2, 0),
-    new Vec2(2, 1)
-];
-
 // A class handling runtime allocation of slots in a texture. Used to allocate slots in the shadow map,
 // and will be used to allocate slots in the cookie texture atlas as well.
 // Note: this will be improved in the future to allocate different size for lights of different priority and screen size,
@@ -35,7 +25,7 @@ class LightTextureAtlas {
         this.shadowMapResolution = 2048;
         this.shadowMap = null;
 
-        // number of additional pixels to render past the required shadow camera angle (90deg for omno, outer for spot) of the shadow camera for clustered lights.
+        // number of additional pixels to render past the required shadow camera angle (90deg for omni, outer for spot) of the shadow camera for clustered lights.
         // This needs to be a pixel more than a shadow filter needs to access.
         this.shadowEdgePixels = 3;
 
@@ -45,6 +35,16 @@ class LightTextureAtlas {
 
         // available slots
         this.slots = [];
+
+        // offsets to individual faces of a cubemap inside 3x3 grid in an atlas slot
+        this.cubeSlotsOffsets = [
+            new Vec2(0, 0),
+            new Vec2(0, 1),
+            new Vec2(1, 0),
+            new Vec2(1, 1),
+            new Vec2(2, 0),
+            new Vec2(2, 1)
+        ];
 
         this.allocateShadowMap(1);  // placeholder as shader requires it
         this.allocateCookieMap(1);  // placeholder as shader requires it
@@ -142,9 +142,9 @@ class LightTextureAtlas {
         }
     }
 
-    collectLights(spotLights, omniLights) {
+    collectLights(spotLights, omniLights, cookiesEnabled, shadowsEnabled) {
 
-        // get all lights that need shadows or cookies
+        // get all lights that need shadows or cookies, if those are enabled
         let needsShadow = false;
         let needsCookie = false;
         const lights = _tempArray;
@@ -154,8 +154,8 @@ class LightTextureAtlas {
             for (let i = 0; i < list.length; i++) {
                 const light = list[i];
                 if (light.visibleThisFrame) {
-                    needsShadow ||= light.castShadows;
-                    needsCookie ||= !!light.cookie;
+                    needsShadow ||= shadowsEnabled && light.castShadows;
+                    needsCookie ||= cookiesEnabled && !!light.cookie;
 
                     if (needsShadow || needsCookie) {
                         lights.push(light);
@@ -164,8 +164,10 @@ class LightTextureAtlas {
             }
         };
 
-        processLights(spotLights);
-        processLights(omniLights);
+        if (cookiesEnabled || shadowsEnabled) {
+            processLights(spotLights);
+            processLights(omniLights);
+        }
 
         if (needsShadow) {
             this.allocateShadowMap(this.shadowMapResolution);
@@ -183,9 +185,9 @@ class LightTextureAtlas {
     }
 
     // update texture atlas for a list of lights
-    update(spotLights, omniLights) {
+    update(spotLights, omniLights, cookiesEnabled, shadowsEnabled) {
 
-        const lights = this.collectLights(spotLights, omniLights);
+        const lights = this.collectLights(spotLights, omniLights, cookiesEnabled, shadowsEnabled);
         if (lights.length > 0) {
 
             // leave gap between individual tiles to avoid shadow / cookie sampling other tiles (4 pixels - should be enough for PCF5)
@@ -226,7 +228,7 @@ class LightTextureAtlas {
                         if (light._type === LIGHTTYPE_OMNI) {
 
                             const smallSize = _viewport.z / 3;
-                            const offset = _cubeSlotsOffsets[face];
+                            const offset = this.cubeSlotsOffsets[face];
                             _viewport.x += smallSize * offset.x;
                             _viewport.y += smallSize * offset.y;
                             _viewport.z = smallSize;

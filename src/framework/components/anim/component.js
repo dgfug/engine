@@ -12,6 +12,7 @@ import { AnimComponentBinder } from './component-binder.js';
 import { AnimComponentLayer } from './component-layer.js';
 import { AnimStateGraph } from '../../../anim/state-graph/anim-state-graph.js';
 import { AnimEvents } from '../../../anim/evaluator/anim-events.js';
+import { Entity } from "../../entity.js";
 
 /**
  * @component
@@ -148,7 +149,7 @@ class AnimComponent extends Component {
                 console.warn(`rootBone entity for supplied guid:${value} cannot be found in the scene`);
             }
             // #endif
-        } else if (value?.constructor.name === 'Entity') {
+        } else if (value instanceof Entity) {
             this._rootBone = value;
         } else {
             this._rootBone = null;
@@ -231,14 +232,15 @@ class AnimComponent extends Component {
         }
     }
 
-    _addLayer({ name, states, transitions, order, weight, mask, blendType }) {
+    _addLayer({ name, states, transitions, weight, mask, blendType }) {
         let graph;
         if (this.rootBone) {
             graph = this.rootBone;
         } else {
             graph = this.entity;
         }
-        const animBinder = new AnimComponentBinder(this, graph, name, mask, order);
+        const layerIndex = this._layers.length;
+        const animBinder = new AnimComponentBinder(this, graph, name, mask, layerIndex);
         const animEvaluator = new AnimEvaluator(animBinder);
         const controller = new AnimController(
             animEvaluator,
@@ -250,17 +252,19 @@ class AnimComponent extends Component {
             this._consumedTriggers
         );
         this._layers.push(new AnimComponentLayer(name, controller, this, weight, blendType));
-        this._layerIndices[name] = order;
+        this._layerIndices[name] = layerIndex;
+        return this._layers[layerIndex];
     }
 
     /**
+     * @function
      * @name AnimComponent#addLayer
-     * @returns {AnimComponentLayer} - The created anim component layer
      * @description Adds a new anim component layer to the anim component.
      * @param {string} name - The name of the layer to create.
      * @param {number} [weight] - The blending weight of the layer. Defaults to 1.
      * @param {object[]} [mask] - A list of paths to bones in the model which should be animated in this layer. If omitted the full model is used. Defaults to null.
-     * @param {string} [blendType] - Defines how properties animated by this layer blend with animaions of those properties in previous layers. Defaults to pc.ANIM_LAYER_OVERWRITE.
+     * @param {string} [blendType] - Defines how properties animated by this layer blend with animations of those properties in previous layers. Defaults to pc.ANIM_LAYER_OVERWRITE.
+     * @returns {AnimComponentLayer} The created anim component layer.
      */
     addLayer(name, weight, mask, blendType) {
         const layer = this.findAnimationLayer(name);
@@ -272,13 +276,13 @@ class AnimComponent extends Component {
             }
         ];
         const transitions = [];
-        this._addLayer({ name, states, transitions, order: this._layers.length, weight, mask, blendType });
+        return this._addLayer({ name, states, transitions, weight, mask, blendType });
     }
 
     /**
      * @function
      * @name AnimComponent#loadStateGraph
-     * @description Initialises component animation controllers using the provided state graph.
+     * @description Initializes component animation controllers using the provided state graph.
      * @param {object} stateGraph - The state graph asset to load into the component. Contains the states, transitions and parameters used to define a complete animation controller.
      * @example
      * entity.anim.loadStateGraph({
@@ -323,7 +327,7 @@ class AnimComponent extends Component {
 
         for (let i = 0; i < stateGraph.layers.length; i++) {
             const layer = stateGraph.layers[i];
-            this._addLayer.bind(this)({ ...layer, order: i });
+            this._addLayer.bind(this)({ ...layer });
         }
         this.setupAnimationAssets();
     }
@@ -425,6 +429,9 @@ class AnimComponent extends Component {
      * @description Rebind all of the components layers.
      */
     rebind() {
+        // clear all targets from previous binding
+        this._targets = {};
+        // rebind all layers
         for (let i = 0; i < this._layers.length; i++) {
             this._layers[i].rebind();
         }
@@ -490,7 +497,7 @@ class AnimComponent extends Component {
      * @param {number} [speed] - Update the speed of the state you are assigning an animation to. Defaults to 1.
      * @param {boolean} [loop] - Update the loop property of the state you are assigning an animation to. Defaults to true.
      */
-    assignAnimation(nodeName, animTrack, layerName, speed = 1,  loop = true) {
+    assignAnimation(nodeName, animTrack, layerName, speed = 1, loop = true) {
         if (!this._stateGraph) {
             this.loadStateGraph(new AnimStateGraph({
                 "layers": [
@@ -555,7 +562,7 @@ class AnimComponent extends Component {
             return param.value;
         }
         // #if _DEBUG
-        console.log('Cannot get parameter value. No parameter found in anim controller named "' + name + '" of type "' + type + '"');
+        console.log(`Cannot get parameter value. No parameter found in anim controller named "${name}" of type "${type}"`);
         // #endif
     }
 
@@ -566,7 +573,7 @@ class AnimComponent extends Component {
             return;
         }
         // #if _DEBUG
-        console.log('Cannot set parameter value. No parameter found in anim controller named "' + name + '" of type "' + type + '"');
+        console.log(`Cannot set parameter value. No parameter found in anim controller named "${name}" of type "${type}"`);
         // #endif
     }
 
